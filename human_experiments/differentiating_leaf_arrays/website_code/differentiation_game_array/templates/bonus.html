@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script>
+    function submitMTurkID(event) {
+        event.preventDefault();
+        const mturkID = document.getElementById('mturkID').value;
+        fetch('/submit_mturk_id', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ mturk_id: mturkID })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = '/terminate';  // Redirect to a thank you page or any other page
+            } else {
+                alert('There was an error submitting your MTurk ID.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="main flex column">
+    <h2>MTurk ID</h2>
+    <p>In order to pay you the bonus payoff you earned in this experiment, we need your MTurk ID.</p> 
+    <p>If you'd like to receive the bonus, please provide your MTurk ID below and click Submit. Otherwise, keep this field blank, and click Submit. </p>
+    <form onsubmit="submitMTurkID(event)">
+        <input type="text" id="mturkID" name="mturkID" placeholder="Enter your MTurk ID" maxlength="50">
+        <button type="submit" class="button primary">Submit</button>
+    </form>
+</div>
+{% endblock %}

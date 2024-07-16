@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .arrays-container {
+        display: flex;
+        justify-content: space-around;
+        width: 80%;
+    }
+
+    .array {
+        text-align: center;
+    }
+
+    .array img {
+        width: 73px; /* Set a standard width for images */
+        height: 73px; /* Set a standard height for images */
+        margin: 0; /* Remove spacing between images */
+        border: 1px solid black; /* Match border style in game_1.html */
+        box-sizing: border-box; /* Ensure the border is included in the element's total width and height */
+    }
+
+    .question-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .button.primary {
+        background-color: blue;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 5px;
+    }
+
+    .button.primary:hover {
+        background-color: darkblue;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="arrays-container">
+        <div class="array" id="peachArray">
+            <h3>Peach Leaves</h3>
+            <!-- Placeholder for peach images -->
+        </div>
+        <div class="array" id="grapeArray">
+            <h3>Grape Leaves</h3>
+            <!-- Placeholder for grape images -->
+        </div>
+    </div>
+    <div class="question-container">
+        <br>
+        <br>
+        <br>
+        <br>
+        <p><b>Which images look more similar to each other: Peach Leaves or Grape Leaves?</b></p>
+        <button id="peachButton" class="button primary">Peach Leaves</button>
+        <button id="grapeButton" class="button primary">Grape Leaves</button>
+    </div>
+    <script src="/static/js/comparison.js"></script> <!-- Link to your JavaScript file -->
+</div>
+<script>
+    var rewardsData = {{ rewards | tojson | safe }};
+</script>
+{% endblock %}

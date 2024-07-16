@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .container {
+        display: flex;
+        justify-content: flex-start; 
+        align-items: center;
+        height: 100vh;
+        padding-left: 120px;
+        padding-top: 50px;
+        padding-bottom: 50px;
+    }
+
+    .instructions-container {
+        width: 300px;
+        margin-right: 50px;
+    }
+
+    .instructions {
+        text-align: center;
+        padding: 10px;
+    }
+
+    #gameCanvas {
+        border: 3px solid #000;
+        display: block;
+    }
+
+    .button.primary.consent {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .button.primary.consent:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="instructions-container">
+        <div class="instructions">
+            <p><b>INSTRUCTIONS</b></p>
+            <p>This is the <b>learning stage</b> of the experiment.</p>
+            <p>You can click up to <b>25 images</b> to find out their underlying reward.</p>
+            <br>
+            <p><b>Number of clicks: <span id="clickCount">0</span></b></p>
+            <p><b>Max. number of clicks: 25</b></p>
+            <br>
+            <p>Once you are done, please click Next below.</p><br>
+            <button class="button primary" id="nextButton">Next</button>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas" width="730" height="730"></canvas>
+</div>
+
+<script>
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    var grid = [];
+    var revealed = [];
+    var rewards = {};
+    var gridSize = 73;
+    var gameWidth = 10;
+    var gameHeight = 10;
+    var images = {};
+    var loadedImagesCount = 0;
+    var totalImages = 20;
+    var clickCount = 0;
+    var totalPayoff = 0;
+    var totalTime = 0;
+
+    var higherPayoffGroup = Math.random() < 0.5 ? 0 : 1;
+
+    function generateUniqueRewards(rangeStart, rangeEnd) {
+        let rewardsSet = new Set();
+        while (rewardsSet.size < 10) {
+            let reward = Math.floor(Math.random() * (rangeEnd - rangeStart + 1)) + rangeStart;
+            rewardsSet.add(reward);
+        }
+        return Array.from(rewardsSet);
+    }
+
+    var peachRewards, grapeRewards;
+
+    if (higherPayoffGroup === 0) {
+        peachRewards = generateUniqueRewards(25, 50);
+        grapeRewards = generateUniqueRewards(0, 25);
+    } else {
+        peachRewards = generateUniqueRewards(0, 25);
+        grapeRewards = generateUniqueRewards(25, 50);
+    }
+
+    function updateClickCount() {
+        clickCount++;
+        document.getElementById('clickCount').innerText = clickCount;
+    }
+
+    function onImageLoad() {
+        loadedImagesCount++;
+        console.log('Image loaded: ' + loadedImagesCount);
+
+        if (loadedImagesCount === totalImages) {
+            console.log('All images loaded, initializing grid.');
+            initGrid();
+        }
+    }
+    
+    function preloadImages() {
+        for (var i = 1; i <= 10; i++) {
+            var peachImg = new Image();
+            peachImg.onload = onImageLoad;
+            peachImg.src = '/static/images/plants/peach_healthy/image (' + i + ').JPG';
+            images['peach' + i] = peachImg;
+            rewards['peach' + i] = peachRewards[i - 1];
+
+            var grapeImg = new Image();
+            grapeImg.onload = onImageLoad;
+            grapeImg.src = '/static/images/plants/grape_healthy/image (' + i + ').JPG';
+            images['grape' + i] = grapeImg;
+            rewards['grape' + i] = grapeRewards[i - 1];
+        }
+    }
+    preloadImages();
+
+    function initGrid() {
+        var allImages = [];
+        for (var i = 1; i <= 10; i++) {
+            for (var j = 0; j < 5; j++) {
+                allImages.push('peach' + i);
+                allImages.push('grape' + i);
+            }
+        }
+
+        allImages.sort(function() { return 0.5 - Math.random(); });
+
+        for (var y = 0; y < gameHeight; y++) {
+            grid[y] = [];
+            revealed[y] = [];
+            for (var x = 0; x < gameWidth; x++) {
+                var imgIndex = y * gameWidth + x;
+                grid[y][x] = allImages[imgIndex];
+                revealed[y][x] = false;
+            }
+        }
+
+        renderGame();
+        console.log('Rewards for Game 1:', rewards);
+    }
+
+    canvas.addEventListener('click', function(event) {
+        if (clickCount >= 25) {
+            console.log('Maximum number of clicks reached.');
+            return;
+        }
+
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+
+        if (!revealed[gridY][gridX]) {
+            revealed[gridY][gridX] = true;
+            updateClickCount();
+            renderGame();
+            totalPayoff += rewards[grid[gridY][gridX]];
+        } else {
+            console.log('Cell already revealed.');
+        }
+    });
+
+    function renderGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var y = 0; y < gameHeight; y++) {
+            for (var x = 0; x < gameWidth; x++) {
+                var img = images[grid[y][x]];
+
+                var imgX = x * gridSize;
+                var imgY = y * gridSize;
+
+                ctx.drawImage(img, imgX, imgY, gridSize, gridSize);
+
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(imgX, imgY, gridSize, gridSize);
+
+                if (revealed[y][x]) {
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "18px Calibri";
+                    ctx.fillText(rewards[grid[y][x]] + "¢", x * gridSize + 5, y * gridSize + 20);
+                }
+            }
+        }
+    }
+
+    document.getElementById('nextButton').addEventListener('click', function(event) {
+        event.preventDefault();
+        var highReward = higherPayoffGroup === 0 ? "peach" : "grape";
+        var lowReward = higherPayoffGroup === 0 ? "grape" : "peach";
+        console.log("High Reward:", highReward);
+        console.log("Low Reward:", lowReward);
+        saveGameData('{{ player_id }}', totalPayoff, totalTime, highReward, lowReward);
+    });
+
+    function saveGameData(playerId, totalPayoff, totalTime, highReward, lowReward) {
+        var gameData = {
+            player_id: playerId,
+            total_payoff: totalPayoff,
+            total_time: totalTime,
+            rewards: rewards,
+            high_reward: highReward,
+            low_reward: lowReward
+        };
+        
+        console.log("Sending game data:", gameData);
+
+        $.ajax({
+            url: '/game_1',
+            type: 'POST',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(gameData),
+            success: function(response) {
+                console.log("Game data saved successfully: ", response);
+                window.location.href = '/game_2';
+            },
+            error: function(error) {
+                console.log("Error saving game data: ", error);
+            }
+        });
+    }
+
+    console.log("Higher payoff group:", higherPayoffGroup === 0 ? "Peaches" : "Grapes");
+</script>
+{% endblock %}

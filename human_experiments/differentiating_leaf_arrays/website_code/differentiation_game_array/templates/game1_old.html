@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    /* Style to center the canvas */
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Adjust height to fit your design */
+    }
+
+    /* Additional styles for canvas */
+    #gameCanvas {
+        border: 1px solid #000; /* Optional border for the canvas */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+</div>
+<script>
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    var grid = [];
+    var revealed = [];
+    var rewards = [];
+    var gridSize = 80; // Size of each cell
+    var gameWidth = 10;
+    var gameHeight = 10;
+    var images = {}; // Object to store preloaded images
+
+    function preloadImages() {
+        var loadedImagesCount = 0;
+        var totalImages = 20; // Total number of images to load
+
+        function onImageLoad() {
+            loadedImagesCount++;
+            if (loadedImagesCount === totalImages) {
+                // All images are loaded
+                // Now you can start the game or enable user interactions
+            }
+        }
+
+        for (var i = 1; i <= 10; i++) {
+            var bellpepperImg = new Image();
+            bellpepperImg.onload = onImageLoad;
+            bellpepperImg.src = '/static/images/plants/bellpepper_healthy/image (' + i + ').JPG';
+            images['bellpepper' + i] = bellpepperImg;
+
+            var strawberryImg = new Image();
+            strawberryImg.onload = onImageLoad;
+            strawberryImg.src = '/static/images/plants/strawberry_healthy/image (' + i + ').JPG';
+            images['strawberry' + i] = strawberryImg;
+        }
+    }
+
+    // Call this function to preload images
+    preloadImages();
+
+    function initGrid() {
+        // Example rewards - you can randomize or calculate these as needed
+        for (var i = 1; i <= 10; i++) {
+            rewards['bellpepper' + i] = Math.random() * 25; // Random reward between 0 and 25
+            rewards['strawberry' + i] = 25 + Math.random() * 25; // Random reward between 25 and 50
+        }
+
+        // Create an array of image names, each repeated 5 times
+        var allImages = [];
+        for (var i = 1; i <= 10; i++) {
+            for (var j = 0; j < 5; j++) { // Repeat each image 5 times
+                allImages.push('bellpepper' + i);
+                allImages.push('strawberry' + i);
+            }
+        }
+
+        // Shuffle the array
+        allImages.sort(function() { return 0.5 - Math.random(); });
+
+        // Assign images to grid
+        for (var y = 0; y < gameHeight; y++) {
+            grid[y] = [];
+            revealed[y] = [];
+            for (var x = 0; x < gameWidth; x++) {
+                var imgIndex = y * gameWidth + x;
+                grid[y][x] = allImages[imgIndex];
+                revealed[y][x] = false;
+            }
+        }
+    }
+
+    // Handle canvas click events
+    canvas.addEventListener('click', function(event) {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+        revealed[gridY][gridX] = true;
+
+        // Add logic to handle click, update the game state, etc.
+        renderGame();
+    });
+
+    function renderGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var y = 0; y < gameHeight; y++) {
+            for (var x = 0; x < gameWidth; x++) {
+                var img = images[grid[y][x]];
+                ctx.drawImage(img, x * gridSize, y * gridSize, gridSize, gridSize);
+                if (revealed[y][x]) {
+                    // Display reward - adjust styling as needed
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "20px Calibri";
+                    ctx.fillText(rewards[grid[y][x]].toFixed(1), x * gridSize + 5, y * gridSize + 20);
+                }
+            }
+        }
+    }
+
+    // Call initGrid to set up the game
+    initGrid();
+</script>
+{% endblock %}

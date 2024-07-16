@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .main {
+        max-width: 800px; /* Or any other width that suits your design */
+        margin: auto;
+        padding: 20px; /* Adds some padding inside the box */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Centers the content */
+    }
+
+    .button.primary.consent {
+        background-color: #007bff; /* Primary button color */
+        color: white; /* Text color */
+        padding: 10px 20px; /* Button padding */
+        text-decoration: none; /* Removes underline from links */
+        border-radius: 5px; /* Rounded corners */
+        border: none; /* Removes border */
+        cursor: pointer; /* Changes cursor to pointer on hover */
+    }
+
+    .button.primary.consent:hover {
+        background-color: #0056b3; /* Darker shade on hover */
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="main flex column">
+    <h2>A few questions</h2>
+    <p>In the next question, you will see two sets of images. Each set will contain 5 images. Please look at each of them, and ask yourself: <b>in which of the two sets do the images look more similar to each other?</b>
+    </p>
+    <br>
+    <a href="/task_main" class="button primary consent">Next</a>
+</div>
+
+{% endblock %}

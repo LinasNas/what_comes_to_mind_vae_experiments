@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .container {
+        display: flex;
+        justify-content: flex-start; /* Align items to the start of the container */
+        align-items: center;
+        height: 100vh;
+        padding-left: 120px; /* Reduce left padding of the container */
+        padding-top: 30px; /* Add padding at the top */
+        padding-bottom: 30px; /* Add padding at the bottom */
+    }
+
+    .instructions-container {
+        width: 300px;
+        margin-right: 150px;
+    }
+
+    .instructions {
+        text-align: center;
+        padding: 10px;
+    }
+
+    #gameCanvas {
+        border: 3px solid #000;
+        display: block; /* This can help in certain cases */
+        /* Remove padding from canvas, if needed, adjust container instead */
+    }
+
+    .button.primary.consent {
+        background-color: #007bff; /* Primary button color */
+        color: white; /* Text color */
+        padding: 10px 20px; /* Button padding */
+        text-decoration: none; /* Removes underline from links */
+        border-radius: 5px; /* Rounded corners */
+        border: none; /* Removes border */
+        cursor: pointer; /* Changes cursor to pointer on hover */
+    }
+
+    .button.primary.consent:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" data-player-id="{{ player_id }}">
+    <div class="instructions-container">
+        <div class="instructions">
+            <p><b>INSTRUCTIONS</b></p>
+            <p>This is the <b>payoff stage</b> of the experiment.</p>
+            <p>You can click up to <b>3 images</b>, and you will receive the reward (in $ cents) displayed in the cell.</p>
+
+            <p>The rewards associated with each image are the same as in the previous stage.</p>
+            <br>
+            <p><b>Number of clicks: <span id="clickCount">0</span></b></p>
+            <p><b>Max. number of clicks: 3</b></p> <!-- Added line for maximum number of clicks -->
+            <p><b>Total Reward: <span id="totalReward">0¢</span></b></p>
+            <br>
+            <button id="nextButton" class="button primary consent">Next</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="790" height="790"></canvas>
+</div>
+
+<script>
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    var grid = [];
+    var revealed = [];
+    var gridSize = 80;
+    var gameWidth = 5;
+    var gameHeight = 4;
+    var images = {};
+    var loadedImagesCount = 0;
+    var totalImages = 20;
+    var clickCount = 0;
+    var totalReward = 0;
+    var playerID = document.querySelector('.container').dataset.playerId;
+    var rewards = {};
+
+    function loadRewards() {
+        console.log("Loading rewards for player ID: ", playerID);
+        $.ajax({
+            url: '/api/get_rewards?player_id=' + playerID,
+            type: 'GET',
+            success: function(rewardsData) {
+                console.log("Rewards retrieved successfully: ", rewardsData);
+                rewards = rewardsData;
+                checkInitConditions();
+            },
+            error: function(error) {
+                console.log("Error retrieving rewards: ", error);
+            }
+        });
+    }
+
+    function checkInitConditions() {
+        if (Object.keys(rewards).length > 0 && loadedImagesCount === totalImages) {
+            console.log('All conditions met, initializing grid.');
+            initGrid();
+        }
+    }
+
+    function updateClickCount() {
+        clickCount++;
+        document.getElementById('clickCount').innerText = clickCount;
+    }
+
+    function onImageLoad() {
+        loadedImagesCount++;
+        console.log('Image loaded: ' + loadedImagesCount);
+
+        if (loadedImagesCount === totalImages) {
+            console.log('All images loaded, initializing grid.');
+            initGrid(); // Initialize grid only after all images are loaded
+        }
+    }
+
+    function preloadImages() {
+        for (var i = 1; i <= 10; i++) {
+            var peachImg = new Image();
+            peachImg.onload = onImageLoad;
+            peachImg.src = '/static/images/plants/peach_healthy/image (' + i + ').JPG';
+            images['peach' + i] = peachImg;
+
+            var grapeImg = new Image();
+            grapeImg.onload = onImageLoad;
+            grapeImg.src = '/static/images/plants/grape_healthy/image (' + i + ').JPG';
+            images['grape' + i] = grapeImg;
+        }
+        checkInitConditions();
+    }
+
+    function initGrid() {
+        var allImages = [];
+        for (var i = 1; i <= 10; i++) {
+            allImages.push('peach' + i);
+            allImages.push('grape' + i);
+        }
+
+        allImages.sort(function() { return 0.5 - Math.random(); });
+
+        for (var y = 0; y < gameHeight; y++) {
+            grid[y] = [];
+            revealed[y] = [];
+            for (var x = 0; x < gameWidth; x++) {
+                var imgIndex = y * gameWidth + x;
+                grid[y][x] = allImages[imgIndex];
+                revealed[y][x] = false;
+            }
+        }
+
+        // Render the game after setting up the grid
+        renderGame();
+    }
+
+    canvas.addEventListener('click', function(event) {
+        // Prevent any further action if 3 clicks have already been made
+        if (clickCount >= 3) {
+            console.log('Maximum number of clicks reached.');
+            return; // Exit the function early
+        }
+
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+
+        // Check if the cell hasn't been revealed yet before incrementing the click count
+        if (!revealed[gridY][gridX]) {
+            revealed[gridY][gridX] = true;
+            updateClickCount(); // Increment and update the click count only if a new cell is revealed
+
+            // Update total reward
+            var cell = grid[gridY][gridX];
+            if (rewards[cell]) {
+                totalReward += rewards[cell]; // Make sure rewards[cell] exists to avoid undefined errors
+                document.getElementById('totalReward').innerText = totalReward + "¢";
+            }
+
+            renderGame();
+        } else {
+            // Optionally, inform the user they clicked an already revealed cell
+            console.log('Cell already revealed.');
+        }
+    });
+
+    function renderGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var y = 0; y < gameHeight; y++) {
+            for (var x = 0; x < gameWidth; x++) {
+                var img = images[grid[y][x]];
+
+                // Coordinates where the image will be drawn
+                var imgX = x * gridSize;
+                var imgY = y * gridSize;
+
+                // Draw the image
+                ctx.drawImage(img, imgX, imgY, gridSize, gridSize);
+
+                // Draw a border around the cell
+                ctx.strokeStyle = 'black';  // Set the border color
+                ctx.lineWidth = 1;  // Set the border width
+                ctx.strokeRect(imgX, imgY, gridSize, gridSize);  // Draw the border
+
+                if (revealed[y][x]) {
+                    // Display reward as an integer with a cent symbol
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "20px Calibri";
+                    ctx.fillText(rewards[grid[y][x]] + "¢", x * gridSize + 5, y * gridSize + 20);
+                }
+            }
+        }
+    }
+
+    document.getElementById('nextButton').addEventListener('click', function(event) {
+        event.preventDefault();
+        saveTotalReward(totalReward);
+    });
+
+    function saveTotalReward(totalReward) {
+        var data = {
+            player_id: playerID,
+            total_payoff: totalReward
+        };
+        
+        console.log("Sending total reward data:", data);
+
+        $.ajax({
+            url: '/save_total_reward',
+            type: 'POST',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log("Total reward saved successfully: ", response);
+                window.location.href = '/task_intro';
+            },
+            error: function(error) {
+                console.log("Error saving total reward: ", error);
+            }
+        });
+    }
+
+    // Adjust the game width and height for a 5x4 grid
+    var gameWidth = 5;
+    var gameHeight = 4;
+
+    // Adjust canvas size for the 5x4 grid
+    canvas.width = gridSize * gameWidth;
+    canvas.height = gridSize * gameHeight;
+
+    // Start preloading images and load rewards
+    preloadImages();
+    loadRewards();
+</script>
+{% endblock %}

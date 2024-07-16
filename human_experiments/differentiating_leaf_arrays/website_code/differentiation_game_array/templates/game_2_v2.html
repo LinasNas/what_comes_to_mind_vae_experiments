@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .container {
+        display: flex;
+        justify-content: flex-start; /* Align items to the start of the container */
+        align-items: center;
+        height: 100vh;
+        padding-left: 120px; /* Reduce left padding of the container */
+        padding-top: 30px; /* Add padding at the top */
+        padding-bottom: 30px; /* Add padding at the bottom */
+    }
+
+    .instructions-container {
+        width: 300px;
+        margin-right: 50px;
+    }
+
+    .instructions {
+        text-align: center;
+        padding: 10px;
+    }
+
+    #gameCanvas {
+        border: 3px solid #000;
+        display: block; /* This can help in certain cases */
+        /* Remove padding from canvas, if needed, adjust container instead */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="instructions-container">
+        <div class="instructions">
+            <p><b>INSTRUCTIONS</b></p>
+            <p>This is the <b>payoff stage</b> of the experiment.</p>
+            <p>You can click up to <b>3 images</b>, and you will receive the reward (in $ cents) displayed in the cell. The rewards associated with each image are the same as in the previous stage.</p>
+            <br>
+            <p><b>Number of clicks: <span id="clickCount">0</span></b></p>
+            <br>
+            <p><b>Total Reward: $<span id="clickCount">0</span></b></p>
+            <br>
+            <p>Once you are done, please click Next below.</p><br>
+            <!-- Next button -->
+            <a href="/task_intro" class="button primary">Next</a>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="730" height="730"></canvas>
+</div>
+
+<script>
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    var grid = [];
+    var revealed = [];
+    var rewards = [];
+    var gridSize = 73;
+    var gameWidth = 10;
+    var gameHeight = 10;
+    var images = {};
+    var loadedImagesCount = 0;
+    var totalImages = 20;
+    var clickCount = 0;
+
+    function updateClickCount() {
+        clickCount++;
+        document.getElementById('clickCount').innerText = clickCount;
+    }
+    function onImageLoad() {
+    loadedImagesCount++;
+    console.log('Image loaded: ' + loadedImagesCount);
+
+    if (loadedImagesCount === totalImages) {
+        console.log('All images loaded, initializing grid.');
+        initGrid(); // Initialize grid after all images are loaded
+        renderGame(); // Render the game immediately
+    }
+}
+
+    function preloadImages() {
+        for (var i = 1; i <= 10; i++) {
+            var bellpepperImg = new Image();
+            bellpepperImg.onload = onImageLoad;
+            bellpepperImg.src = '/static/images/plants/bellpepper_healthy/image (' + i + ').JPG';
+            images['bellpepper' + i] = bellpepperImg;
+
+            var strawberryImg = new Image();
+            strawberryImg.onload = onImageLoad;
+            strawberryImg.src = '/static/images/plants/strawberry_healthy/image (' + i + ').JPG';
+            images['strawberry' + i] = strawberryImg;
+        }
+    }
+
+    // Start preloading images
+    preloadImages();
+
+    function initGrid() {
+        // Example rewards - you can randomize or calculate these as needed
+        for (var i = 1; i <= 10; i++) {
+            rewards['bellpepper' + i] = Math.random() * 25; // Random reward between 0 and 25
+            rewards['strawberry' + i] = 25 + Math.random() * 25; // Random reward between 25 and 50
+        }
+
+        // Create an array with unique images and gray cells
+        var allCells = [];
+        for (var i = 1; i <= 10; i++) {
+            allCells.push('bellpepper' + i);
+            allCells.push('strawberry' + i);
+        }
+        while (allCells.length < 100) {
+            allCells.push('gray'); // Fill the rest with 'gray'
+        }
+
+        // Shuffle the array
+        allCells.sort(function() { return 0.5 - Math.random(); });
+
+        // Assign cells to grid
+        for (var y = 0; y < gameHeight; y++) {
+            grid[y] = [];
+            revealed[y] = [];
+            for (var x = 0; x < gameWidth; x++) {
+                var cellIndex = y * gameWidth + x;
+                grid[y][x] = allCells[cellIndex];
+                revealed[y][x] = false;
+            }
+        }
+
+        // Render the game after setting up the grid
+        renderGame();
+    }
+
+    // Handle canvas click events
+    canvas.addEventListener('click', function(event) {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+        revealed[gridY][gridX] = true;
+
+        // Add logic to handle click, update the game state, etc.
+        renderGame();
+
+        updateClickCount();
+    });
+
+    function renderGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var y = 0; y < gameHeight; y++) {
+            for (var x = 0; x < gameWidth; x++) {
+                var cell = grid[y][x];
+                var imgX = x * gridSize;
+                var imgY = y * gridSize;
+
+                if (cell !== 'gray') {
+                    // Draw the image
+                    var img = images[cell];
+                    ctx.drawImage(img, imgX, imgY, gridSize, gridSize);
+                } else {
+                    // Fill the cell with gray color
+                    ctx.fillStyle = 'gray';
+                    ctx.fillRect(imgX, imgY, gridSize, gridSize);
+                }
+
+                // Draw a border around the cell
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(imgX, imgY, gridSize, gridSize);
+
+                if (revealed[y][x] && cell !== 'gray') {
+                    // Display reward for non-gray cells
+                    ctx.fillStyle = "yellow";
+                    ctx.font = "18px Calibri";
+                    ctx.fillText(rewards[cell].toFixed(1), imgX + 5, imgY + 20);
+                }
+            }
+        }
+    }
+
+    // Initialize the grid and preloading of images
+    // preloadImages();
+    initGrid();
+</script>
+{% endblock %}

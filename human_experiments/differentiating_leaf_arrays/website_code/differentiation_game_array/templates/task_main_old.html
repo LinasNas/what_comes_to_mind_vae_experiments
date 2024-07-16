@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .comparison-container {
+        text-align: center;
+    }
+
+    #image-container img {
+        margin: 0 40px; /* Further increase horizontal distance */
+    }
+
+    #slider-container {
+        margin: 20px auto; /* Centered in the container */
+        width: 80%; /* Wider slider and tickers */
+    }
+
+    #sliderTicks {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .question-container {
+        margin-bottom: 20px;
+    }
+
+    .task-info {
+        margin-top: 20px;
+    }
+
+    .button.primary {
+        background-color: blue;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+
+    .button.primary:hover {
+        background-color: darkblue;
+    }
+
+    .button.primary.disabled {
+        background-color: lightblue; /* Lighter shade for disabled state */
+        color: darkblue; /* Optional: change text color for disabled state */
+        cursor: not-allowed; /* Change cursor to indicate the button is disabled */
+    }
+    
+    /* Hide the back Button for now */
+    #backButton {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="comparison-container">
+        <div class="question-container">
+            <p><b>On a scale of 1-10, how different do you think the two plant leaves are?</b></p>
+            <p>1 = They are identical</p>
+            <p>10 = They are completely different</p>
+            <br>
+        </div>
+        <div id="image-container">
+            <!-- Placeholders for images -->
+            <img id="image1" src="" alt="Image 1">
+            <img id="image2" src="" alt="Image 2">
+        </div>
+        <div id="slider-container">
+            <!-- Slider for similarity rating -->
+            <input type="range" id="similaritySlider" min="1" max="10" value="5" step="1" style="width: 100%;">
+            <div id="sliderTicks">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+            </div>
+            <!-- Display current slider value -->
+            <p>Current Value: <span id="sliderValue">5</span></p>
+            <!-- Task information -->
+            <br>
+            <p class="task-info">Task: <span id="taskCounter">1</span>/10</p>
+        </div>
+        <button id="backButton" class="button primary">Back</button>
+        <button id="nextButton" class="button primary">Next</button>
+    
+    </div>
+    <script src="/static/js/comparison.js"></script> <!-- Link to your JavaScript file -->
+</div>
+
+<script>
+    var rewardsData = {{ rewards | tojson | safe }};
+</script>
+<script src="/static/js/comparison.js"></script> <!-- Link to your JavaScript file -->
+{% endblock %}
+
+</script>

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .main {
+        max-width: 800px; /* Or any other width that suits your design */
+        margin: auto;
+        padding: 20px; /* Adds some padding inside the box */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Centers the content */
+        /* line-height: 1.6; 
+    }
+
+    .main p {
+        margin-bottom: 1rem; /* Adds bottom margin to paragraphs for additional spacing between them */
+    }
+
+    .button.primary.consent {
+        background-color: #007bff; /* Primary button color */
+        color: white; /* Text color */
+        padding: 10px 20px; /* Button padding */
+        text-decoration: none; /* Removes underline from links */
+        border-radius: 5px; /* Rounded corners */
+        border: none; /* Removes border */
+        cursor: pointer; /* Changes cursor to pointer on hover */
+    }
+
+    .button.primary.consent:hover {
+        background-color: #0056b3; /* Darker shade on hover */
+    }
+</style>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="main flex column">
+    <h2>Introduction</h2>
+    <p> <b>Please read the following directions carefully:</b></p>
+
+    <p>In this experiment, you will see some images of plants. Each image has a payoff associated with it. Some plants have higher payoffs, while others have lower payoffs. Importantly, these payoffs are not random: they are determined by certain features of the plants.</p>
+
+    <p>You will first have a chance to learn the payoffs associated with different image. Then you will have a chance to select several images, and you will be paid the rewards associated with each of them. As mentioned before, some features of the plants lead to higher rewards, while others lead to lower rewards. </p>
+
+    <p> </p>Lastly, you will be asked several survey questions. </p>
+
+    <p> If you are ready, click Next below.</p>
+    <br>
+    <br>
+
+    <a href="/game_1_introduction_1" class="button primary consent">Next</a>
+</div>
+
+{% endblock %}

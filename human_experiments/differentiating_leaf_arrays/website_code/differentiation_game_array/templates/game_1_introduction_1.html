@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .main {
+        max-width: 800px; /* Or any other width that suits your design */
+        margin: auto;
+        padding: 20px; /* Adds some padding inside the box */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Centers the content */
+    }
+
+    .button.primary.consent {
+        background-color: #007bff; /* Primary button color */
+        color: white; /* Text color */
+        padding: 10px 20px; /* Button padding */
+        text-decoration: none; /* Removes underline from links */
+        border-radius: 5px; /* Rounded corners */
+        border: none; /* Removes border */
+        cursor: pointer; /* Changes cursor to pointer on hover */
+    }
+
+    .button.primary.consent:hover {
+        background-color: #0056b3; /* Darker shade on hover */
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="main flex column">
+    <p><b>Stage 1: Learning Game</b></p>
+    <p> In this stage, you will see a series of images of plants. Each of these plants is associated with a payoff.</p>
+        
+    <p>To find the payoff, you can simply click on the image. You will be able to click on up to <b>25 images</b> to find out their payoffs. The grid of images will look like this: </p>
+    <br>
+
+    <img src="/static/images/game/example_grid.png" alt="Game 1 Grid" style="width: 100%; max-width: 300px;">
+    <br>
+
+    <p>Once you click on an image, you will see the reward displayed in cents (¢), like in the example below:</p>
+    <img src="/static/images/game/image_combined.png" alt="Game 1 example" style="width: 50%; max-width: 300px;">
+    <br>
+
+    <p><b>Importantly, the payoffs for each image are not random: some features of the plants are associated with higher rewards.</b></p>
+
+    <p>After this game, you will see some of the same images from this grid again. <b>You will be able to click on 3 images, and win the payoffs associated with each of them.</b></p>
+
+    <br>
+    <p>To start the game, click Next.</p>
+    <br>
+
+    <a href="/game_1" class="button primary consent">Next</a>
+</div>
+
+{% endblock %}
